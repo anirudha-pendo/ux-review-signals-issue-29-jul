@@ -6,7 +6,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { updateWorkspace } from "@/lib/db/repositories/workspaces.repo";
 import { useAuthContext } from "@/features/auth/hooks/auth-context";
 import type { Workspace } from "@/types";
@@ -65,6 +71,12 @@ export function WorkspaceForm() {
       const updated: Workspace = { ...workspace, ...values };
       await updateWorkspace(updated);
       setActiveWorkspace(updated);
+      pendo.track("workspace_settings_updated", {
+        currency: values.currency,
+        locale: values.locale,
+        currency_changed: values.currency !== workspace.currency,
+        locale_changed: values.locale !== workspace.locale,
+      });
       toast.success("Workspace settings saved");
     } catch {
       toast.error("Failed to save workspace settings");
@@ -75,19 +87,30 @@ export function WorkspaceForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <Label htmlFor="workspace-name">Workspace Name</Label>
-        <Input id="workspace-name" aria-invalid={!!errors.name} {...register("name")} />
-        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+        <Input
+          id="workspace-name"
+          aria-invalid={!!errors.name}
+          {...register("name")}
+        />
+        {errors.name && (
+          <p className="text-sm text-destructive">{errors.name.message}</p>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="currency-setting">Currency</Label>
-        <Select value={watch("currency")} onValueChange={(v) => setValue("currency", v, { shouldDirty: true })}>
+        <Select
+          value={watch("currency")} // eslint-disable-line react-hooks/incompatible-library
+          onValueChange={(v) => setValue("currency", v, { shouldDirty: true })}
+        >
           <SelectTrigger id="currency-setting">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {CURRENCIES.map((c) => (
-              <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
+              <SelectItem key={c.code} value={c.code}>
+                {c.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -95,20 +118,31 @@ export function WorkspaceForm() {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="locale-setting">Number Format / Locale</Label>
-        <Select value={watch("locale")} onValueChange={(v) => setValue("locale", v, { shouldDirty: true })}>
+        <Select
+          value={watch("locale")}
+          onValueChange={(v) => setValue("locale", v, { shouldDirty: true })}
+        >
           <SelectTrigger id="locale-setting">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {LOCALES.map((l) => (
-              <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+              <SelectItem key={l.code} value={l.code}>
+                {l.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      <Button type="submit" disabled={isSubmitting || !isDirty} className="self-start">
-        {isSubmitting && <Loader2 data-icon="inline-start" className="animate-spin" />}
+      <Button
+        type="submit"
+        disabled={isSubmitting || !isDirty}
+        className="self-start"
+      >
+        {isSubmitting && (
+          <Loader2 data-icon="inline-start" className="animate-spin" />
+        )}
         Save changes
       </Button>
     </form>

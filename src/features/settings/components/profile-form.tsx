@@ -38,8 +38,15 @@ export function ProfileForm() {
         .toUpperCase()
         .slice(0, 2);
 
-      await updateUser({ ...user, displayName: values.displayName, avatarInitials: initials });
+      await updateUser({
+        ...user,
+        displayName: values.displayName,
+        avatarInitials: initials,
+      });
       await refreshUser();
+      pendo.track("profile_updated", {
+        field_changed: "displayName",
+      });
       toast.success("Profile updated");
     } catch {
       toast.error("Failed to update profile");
@@ -59,8 +66,12 @@ export function ProfileForm() {
           />
         </div>
         <div>
-          <p className="font-mono text-[10px] tracking-widest uppercase text-foreground">{user?.displayName}</p>
-          <p className="font-mono text-[10px] tracking-wider text-muted-foreground">@{user?.username}</p>
+          <p className="font-mono text-[10px] tracking-widest uppercase text-foreground">
+            {user?.displayName}
+          </p>
+          <p className="font-mono text-[10px] tracking-wider text-muted-foreground">
+            @{user?.username}
+          </p>
         </div>
       </div>
 
@@ -71,17 +82,29 @@ export function ProfileForm() {
           aria-invalid={!!errors.displayName}
           {...register("displayName")}
         />
-        {errors.displayName && <p className="text-sm text-destructive">{errors.displayName.message}</p>}
+        {errors.displayName && (
+          <p className="text-sm text-destructive">
+            {errors.displayName.message}
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-1">
         <Label>Username</Label>
         <Input value={user?.username ?? ""} disabled />
-        <p className="text-xs text-muted-foreground">Username cannot be changed.</p>
+        <p className="text-xs text-muted-foreground">
+          Username cannot be changed.
+        </p>
       </div>
 
-      <Button type="submit" disabled={isSubmitting || !isDirty} className="self-start">
-        {isSubmitting && <Loader2 data-icon="inline-start" className="animate-spin" />}
+      <Button
+        type="submit"
+        disabled={isSubmitting || !isDirty}
+        className="self-start"
+      >
+        {isSubmitting && (
+          <Loader2 data-icon="inline-start" className="animate-spin" />
+        )}
         Save changes
       </Button>
     </form>

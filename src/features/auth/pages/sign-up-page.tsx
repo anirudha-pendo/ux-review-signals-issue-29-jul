@@ -12,6 +12,10 @@ export function SignUpPage() {
   async function handleSignUp(values: SignUpFormValues) {
     try {
       await signUp(values.username, values.displayName, values.password);
+      pendo.track("user_signed_up", {
+        username: values.username,
+        has_display_name: Boolean(values.displayName),
+      });
       navigate("/setup-workspace", { replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign up failed");
@@ -29,12 +33,17 @@ export function SignUpPage() {
         </p>
       </div>
 
-      <BpBox className="w-full max-w-[380px] section-enter" style={{ animationDelay: "40ms" }}>
+      <BpBox
+        className="w-full max-w-[380px] section-enter"
+        style={{ animationDelay: "40ms" }}
+      >
         <div className="border-b border-foreground px-5 py-3 flex items-center justify-between">
           <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
             Create Account
           </span>
-          <span className="font-mono text-[10px] text-muted-foreground/40">new user</span>
+          <span className="font-mono text-[10px] text-muted-foreground/40">
+            new user
+          </span>
         </div>
 
         <div className="p-5">
@@ -54,7 +63,10 @@ export function SignUpPage() {
         </div>
       </BpBox>
 
-      <p className="mt-8 font-mono text-[10px] text-muted-foreground/40 tracking-wider section-enter" style={{ animationDelay: "80ms" }}>
+      <p
+        className="mt-8 font-mono text-[10px] text-muted-foreground/40 tracking-wider section-enter"
+        style={{ animationDelay: "80ms" }}
+      >
         Data stays on this device — no servers, no tracking.
       </p>
     </div>

@@ -19,8 +19,17 @@ interface BudgetRowFormProps {
   onClear: (() => Promise<void>) | null;
 }
 
-function BudgetRowForm({ category, currentLimit, currency, locale, onSave, onClear }: BudgetRowFormProps) {
-  const [value, setValue] = useState(currentLimit !== null ? String(currentLimit) : "");
+function BudgetRowForm({
+  category,
+  currentLimit,
+  currency,
+  locale,
+  onSave,
+  onClear,
+}: BudgetRowFormProps) {
+  const [value, setValue] = useState(
+    currentLimit !== null ? String(currentLimit) : "",
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   const parsed = Number(value);
@@ -35,6 +44,11 @@ function BudgetRowForm({ category, currentLimit, currency, locale, onSave, onCle
     setIsSaving(true);
     try {
       await onSave(category.id, parsed);
+      pendo.track("budget_set", {
+        category_id: category.id,
+        category_name: category.name,
+        monthly_limit: parsed,
+      });
       toast.success(`Budget set for ${category.name}`);
     } catch {
       toast.error("Failed to save budget");
@@ -48,6 +62,10 @@ function BudgetRowForm({ category, currentLimit, currency, locale, onSave, onCle
     setIsSaving(true);
     try {
       await onClear();
+      pendo.track("budget_cleared", {
+        category_id: category.id,
+        category_name: category.name,
+      });
       setValue("");
       toast.success(`Budget cleared for ${category.name}`);
     } catch {
@@ -60,7 +78,10 @@ function BudgetRowForm({ category, currentLimit, currency, locale, onSave, onCle
   return (
     <div className="flex items-center justify-between py-2.5 gap-3">
       <div className="flex items-center gap-2.5 min-w-0">
-        <span className="size-3 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
+        <span
+          className="size-3 rounded-full shrink-0"
+          style={{ backgroundColor: category.color }}
+        />
         <span className="text-sm truncate">{category.name}</span>
         {currentLimit !== null && (
           <span className="font-mono text-[10px] text-muted-foreground/60 shrink-0">
@@ -79,7 +100,13 @@ function BudgetRowForm({ category, currentLimit, currency, locale, onSave, onCle
           className="w-28 h-8 font-mono text-sm"
           aria-label={`Monthly budget for ${category.name}`}
         />
-        <Button size="sm" variant="outline" className="h-8" onClick={handleSave} disabled={isSaving || !isDirty || !isValid}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8"
+          onClick={handleSave}
+          disabled={isSaving || !isDirty || !isValid}
+        >
           {isSaving ? <Loader2 className="size-3 animate-spin" /> : "Set"}
         </Button>
         {onClear && (
@@ -101,7 +128,8 @@ function BudgetRowForm({ category, currentLimit, currency, locale, onSave, onCle
 
 export function BudgetManager() {
   const { workspace } = useAuthContext();
-  const { budgets, expenseCategories, isLoading, saveBudget, removeBudget } = useBudgets(workspace!.id);
+  const { budgets, expenseCategories, isLoading, saveBudget, removeBudget } =
+    useBudgets(workspace!.id);
 
   const currency = workspace?.currency ?? "USD";
   const locale = workspace?.locale ?? "en-US";
@@ -121,7 +149,8 @@ export function BudgetManager() {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-muted-foreground">
-        Set monthly spending limits per category. You&apos;ll be alerted at 80% and when a budget is exceeded.
+        Set monthly spending limits per category. You&apos;ll be alerted at 80%
+        and when a budget is exceeded.
       </p>
       <div className="rounded-lg border px-4">
         <div className="flex flex-col">

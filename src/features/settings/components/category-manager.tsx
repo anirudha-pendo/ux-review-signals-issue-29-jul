@@ -7,9 +7,20 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +33,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { createCategory, deleteCategory, updateCategory } from "@/lib/db/repositories/categories.repo";
+import {
+  createCategory,
+  deleteCategory,
+  updateCategory,
+} from "@/lib/db/repositories/categories.repo";
 import { useAuthContext } from "@/features/auth/hooks/auth-context";
 import { useCategories } from "../hooks/use-settings";
 import type { Category, CategoryScope } from "@/types";
@@ -36,8 +51,16 @@ const categorySchema = z.object({
 type CategoryFormValues = z.infer<typeof categorySchema>;
 
 const PRESET_COLORS = [
-  "#ef4444", "#f97316", "#f59e0b", "#22c55e", "#06b6d4",
-  "#3b82f6", "#8b5cf6", "#ec4899", "#6b7280", "#84cc16",
+  "#ef4444",
+  "#f97316",
+  "#f59e0b",
+  "#22c55e",
+  "#06b6d4",
+  "#3b82f6",
+  "#8b5cf6",
+  "#ec4899",
+  "#6b7280",
+  "#84cc16",
 ];
 
 interface CategoryFormDialogProps {
@@ -47,7 +70,12 @@ interface CategoryFormDialogProps {
   onCancel: () => void;
 }
 
-function CategoryFormDialog({ open, defaultValues, onSubmit, onCancel }: CategoryFormDialogProps) {
+function CategoryFormDialog({
+  open,
+  defaultValues,
+  onSubmit,
+  onCancel,
+}: CategoryFormDialogProps) {
   const {
     register,
     handleSubmit,
@@ -63,25 +91,37 @@ function CategoryFormDialog({ open, defaultValues, onSubmit, onCancel }: Categor
     },
   });
 
-  const selectedColor = watch("color");
+  const selectedColor = watch("color"); // eslint-disable-line react-hooks/incompatible-library
   const scope = watch("scope");
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>{defaultValues?.name ? "Edit Category" : "New Category"}</DialogTitle>
+          <DialogTitle>
+            {defaultValues?.name ? "Edit Category" : "New Category"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="cat-name">Name</Label>
-            <Input id="cat-name" placeholder="e.g. Groceries" aria-invalid={!!errors.name} {...register("name")} />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+            <Input
+              id="cat-name"
+              placeholder="e.g. Groceries"
+              aria-invalid={!!errors.name}
+              {...register("name")}
+            />
+            {errors.name && (
+              <p className="text-sm text-destructive">{errors.name.message}</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
             <Label>Applies to</Label>
-            <Select value={scope} onValueChange={(v) => setValue("scope", v as CategoryScope)}>
+            <Select
+              value={scope}
+              onValueChange={(v) => setValue("scope", v as CategoryScope)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -104,7 +144,8 @@ function CategoryFormDialog({ open, defaultValues, onSubmit, onCancel }: Categor
                   className="size-7 rounded-full border-2 transition-all"
                   style={{
                     backgroundColor: c,
-                    borderColor: selectedColor === c ? "currentColor" : "transparent",
+                    borderColor:
+                      selectedColor === c ? "currentColor" : "transparent",
                   }}
                   aria-label={`Color ${c}`}
                 />
@@ -126,13 +167,19 @@ function CategoryFormDialog({ open, defaultValues, onSubmit, onCancel }: Categor
                 aria-invalid={!!errors.color}
               />
             </div>
-            {errors.color && <p className="text-sm text-destructive">{errors.color.message}</p>}
+            {errors.color && (
+              <p className="text-sm text-destructive">{errors.color.message}</p>
+            )}
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 data-icon="inline-start" className="animate-spin" />}
+              {isSubmitting && (
+                <Loader2 data-icon="inline-start" className="animate-spin" />
+              )}
               {defaultValues?.name ? "Save" : "Add category"}
             </Button>
           </div>
@@ -159,6 +206,10 @@ export function CategoryManager() {
       };
       await createCategory(cat);
       await reload();
+      pendo.track("category_created", {
+        scope: values.scope,
+        category_name: values.name,
+      });
       setShowForm(false);
       toast.success("Category added");
     } catch {
@@ -183,6 +234,10 @@ export function CategoryManager() {
     try {
       await deleteCategory(deletingCat.id);
       await reload();
+      pendo.track("category_deleted", {
+        scope: deletingCat.scope,
+        category_name: deletingCat.name,
+      });
       setDeletingCat(null);
       toast.success("Category deleted");
     } catch {
@@ -190,13 +245,19 @@ export function CategoryManager() {
     }
   }
 
-  const expense = categories.filter((c) => c.scope === "expense" || c.scope === "both");
-  const income = categories.filter((c) => c.scope === "income" || c.scope === "both");
+  const expense = categories.filter(
+    (c) => c.scope === "expense" || c.scope === "both",
+  );
+  const income = categories.filter(
+    (c) => c.scope === "income" || c.scope === "both",
+  );
 
   if (isLoading) {
     return (
       <div className="flex flex-col gap-2">
-        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full" />
+        ))}
       </div>
     );
   }
@@ -208,14 +269,24 @@ export function CategoryManager() {
           <div key={cat.id}>
             <div className="flex items-center justify-between py-2.5">
               <div className="flex items-center gap-2.5">
-                <span className="size-3 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                <span
+                  className="size-3 rounded-full shrink-0"
+                  style={{ backgroundColor: cat.color }}
+                />
                 <span className="text-sm">{cat.name}</span>
                 {cat.isDefault && (
-                  <Badge variant="secondary" className="text-xs">Default</Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    Default
+                  </Badge>
                 )}
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="size-7" onClick={() => setEditingCat(cat)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7"
+                  onClick={() => setEditingCat(cat)}
+                >
                   <Pencil className="size-3.5" />
                   <span className="sr-only">Edit</span>
                 </Button>
@@ -249,14 +320,20 @@ export function CategoryManager() {
 
       <div className="flex flex-col gap-6">
         <div>
-          <h4 className="text-sm font-medium text-muted-foreground mb-2">Expense Categories</h4>
+          <h4 className="text-sm font-medium text-muted-foreground mb-2">
+            Expense Categories
+          </h4>
           <div className="rounded-lg border px-4">
+            {/* eslint-disable-next-line react-hooks/static-components */}
             <CategoryList items={expense} />
           </div>
         </div>
         <div>
-          <h4 className="text-sm font-medium text-muted-foreground mb-2">Income Categories</h4>
+          <h4 className="text-sm font-medium text-muted-foreground mb-2">
+            Income Categories
+          </h4>
           <div className="rounded-lg border px-4">
+            {/* eslint-disable-next-line react-hooks/static-components */}
             <CategoryList items={income} />
           </div>
         </div>
@@ -274,13 +351,17 @@ export function CategoryManager() {
         onCancel={() => setEditingCat(null)}
       />
 
-      <AlertDialog open={!!deletingCat} onOpenChange={(o) => !o && setDeletingCat(null)}>
+      <AlertDialog
+        open={!!deletingCat}
+        onOpenChange={(o) => !o && setDeletingCat(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete category?</AlertDialogTitle>
             <AlertDialogDescription>
-              <strong>&ldquo;{deletingCat?.name}&rdquo;</strong> will be deleted. Transactions using this category will
-              remain but show as uncategorized.
+              <strong>&ldquo;{deletingCat?.name}&rdquo;</strong> will be
+              deleted. Transactions using this category will remain but show as
+              uncategorized.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
