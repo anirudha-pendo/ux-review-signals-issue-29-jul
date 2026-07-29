@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { hashPassword, verifyPassword } from "@/lib/crypto";
 import { getDB } from "@/lib/db/client";
-import { createUser, getUserByUsername } from "@/lib/db/repositories/users.repo";
+import {
+  createUser,
+  getUserByUsername,
+} from "@/lib/db/repositories/users.repo";
 import { getWorkspacesByUserId } from "@/lib/db/repositories/workspaces.repo";
 import { clearSession, getSession, saveSession } from "@/lib/session";
 import type { Session, User, Workspace } from "@/types";
@@ -15,7 +18,11 @@ interface AuthState {
 }
 
 interface AuthActions {
-  signUp: (username: string, displayName: string, password: string) => Promise<void>;
+  signUp: (
+    username: string,
+    displayName: string,
+    password: string,
+  ) => Promise<void>;
   signIn: (username: string, password: string) => Promise<void>;
   signOut: () => void;
   setActiveWorkspace: (workspace: Workspace) => void;
@@ -59,39 +66,55 @@ export function useAuth(): AuthState & AuthActions {
     loadSession();
   }, [loadSession]);
 
-  const signUp = useCallback(async (username: string, displayName: string, password: string) => {
-    const existing = await getUserByUsername(username);
-    if (existing) throw new Error("Username is already taken");
+  const signUp = useCallback(
+    async (username: string, displayName: string, password: string) => {
+      const existing = await getUserByUsername(username);
+      if (existing) throw new Error("Username is already taken");
 
-    const { hash, salt } = await hashPassword(password);
-    const initials = displayName
-      .split(" ")
-      .map((w) => w[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+      const { hash, salt } = await hashPassword(password);
+      const initials = displayName
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
 
-    const newUser: User = {
-      id: crypto.randomUUID(),
-      username,
-      displayName,
-      avatarInitials: initials,
-      passwordHash: hash,
-      salt,
-      createdAt: new Date().toISOString(),
-    };
+      const newUser: User = {
+        id: crypto.randomUUID(),
+        username,
+        displayName,
+        avatarInitials: initials,
+        passwordHash: hash,
+        salt,
+        createdAt: new Date().toISOString(),
+      };
 
-    await createUser(newUser);
-    setUser(newUser);
-    const session: Session = { userId: newUser.id, workspaceId: "" };
-    saveSession(session);
-  }, []);
+      await createUser(newUser);
+      setUser(newUser);
+      const session: Session = { userId: newUser.id, workspaceId: "" };
+      saveSession(session);
+
+      pendo.identify({
+        visitor: {
+          id: newUser.id,
+          full_name: newUser.displayName,
+          username: newUser.username,
+          createdAt: newUser.createdAt,
+        },
+      });
+    },
+    [],
+  );
 
   const signIn = useCallback(async (username: string, password: string) => {
     const storedUser = await getUserByUsername(username);
     if (!storedUser) throw new Error("Invalid username or password");
 
-    const valid = await verifyPassword(password, storedUser.passwordHash, storedUser.salt);
+    const valid = await verifyPassword(
+      password,
+      storedUser.passwordHash,
+      storedUser.salt,
+    );
     if (!valid) throw new Error("Invalid username or password");
 
     setUser(storedUser);
@@ -104,10 +127,20 @@ export function useAuth(): AuthState & AuthActions {
       workspaceId: activeWorkspace?.id ?? "",
     };
     saveSession(session);
+
+    pendo.identify({
+      visitor: {
+        id: storedUser.id,
+        full_name: storedUser.displayName,
+        username: storedUser.username,
+        createdAt: storedUser.createdAt,
+      },
+    });
   }, []);
 
   const signOut = useCallback(() => {
     clearSession();
+    pendo.clearSession();
     setUser(null);
     setWorkspace(null);
   }, []);
