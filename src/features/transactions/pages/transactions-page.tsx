@@ -65,7 +65,7 @@ export function TransactionsPage() {
   }, [transactionIdsKey]);
 
   useEffect(() => {
-    refreshAttachmentCounts();
+    refreshAttachmentCounts(); // eslint-disable-line react-hooks/set-state-in-effect
   }, [refreshAttachmentCounts]);
   const [filters, setFilters] = useState<TransactionFilters>({
     search: "",

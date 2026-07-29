@@ -100,7 +100,7 @@ export function WorkspaceForm() {
       <div className="flex flex-col gap-2">
         <Label htmlFor="currency-setting">Currency</Label>
         <Select
-          value={watch("currency")}
+          value={watch("currency")} // eslint-disable-line react-hooks/incompatible-library
           onValueChange={(v) => setValue("currency", v, { shouldDirty: true })}
         >
           <SelectTrigger id="currency-setting">

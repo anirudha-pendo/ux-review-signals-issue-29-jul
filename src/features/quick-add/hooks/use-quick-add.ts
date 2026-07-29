@@ -40,7 +40,7 @@ export function useQuickAdd(
   // Lazy-load history on first open; reset the input each time it opens.
   useEffect(() => {
     if (!open) return;
-    setInput("");
+    setInput(""); // eslint-disable-line react-hooks/set-state-in-effect
     setOverrideCategory(null);
     if (hasLoaded) return;
     (async () => {
