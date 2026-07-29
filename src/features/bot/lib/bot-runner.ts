@@ -1,4 +1,5 @@
 import type React from "react";
+import { clearSession } from "@/lib/session";
 import {
   AbortError,
   sleep,
@@ -8,6 +9,7 @@ import {
   clickRadixSelectByTrigger,
   clickButtonByText,
   clickNavLink,
+  pressEnter,
   pick,
   randInt,
   rand,
@@ -53,6 +55,9 @@ const CURRENCIES = ["US Dollar (USD)","Euro (EUR)","British Pound (GBP)","Indian
 const LOCALES = ["English (US)","English (UK)","English (India)","German (Germany)","French (France)","Japanese (Japan)","Chinese (China)"];
 const TX_DESCRIPTIONS = ["Coffee","Grocery run","Rent","Gas station","Restaurant","Online order","Gym","Pharmacy","Salary","Freelance payment","Utility bill","Movie tickets","Bus pass","Book store","Lunch","Haircut","Subscription","Donation","Clothes shopping","Doctor visit"];
 const DISPLAY_NAMES_EXTRA = ["Sam Rivers","Lou Grant","Pat Kelly","Chris Vega","Jamie Stone","Devon Lee","Skyler Fox","Rowan Hunt","Blair West","Quinn Nash"];
+const GOAL_NAMES = ["Vacation fund","Emergency fund","New laptop","Wedding fund","Car down payment","Home renovation","Holiday gifts","Retirement boost","Moving fund","New bike"];
+const CATEGORY_NAMES = ["Pets","Travel","Education","Gifts","Kids","Subscriptions","Home Improvement","Charity","Insurance","Childcare"];
+const QUICK_ADD_PHRASES = ["coffee","groceries","gas","lunch","gym","haircut","movie tickets","pharmacy","bus pass","book store"];
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -560,6 +565,318 @@ const ACTIONS: BotAction[] = [
     },
   },
 
+  // ── addGoal ───────────────────────────────────────────────────────────────
+  {
+    name: "addGoal",
+    weight: () => 8,
+    canRun: (s) => s.isLoggedIn && s.hasWorkspace,
+    async run(iframe, _state, log, abortRef) {
+      log({ type: "action", message: "→ Add goal" });
+      const doc = iframeDoc(iframe);
+      const win = iframeWin(iframe);
+
+      await navigateTo(iframe, "/goals", "h1", abortRef);
+      await sleep(300, abortRef);
+
+      clickButtonByText("New Goal", doc);
+      await waitFor("#goal-name", doc, 5000);
+      await sleep(200, abortRef);
+
+      const nameEl = doc.querySelector("#goal-name") as HTMLInputElement;
+      const targetEl = doc.querySelector("#goal-target") as HTMLInputElement;
+      setReactInput(nameEl, pick(GOAL_NAMES), win);
+      await sleep(150, abortRef);
+      setReactInput(targetEl, String(randInt(500, 10000)), win);
+      await sleep(150, abortRef);
+
+      clickButtonByText("Create goal", doc);
+      await sleep(600, abortRef);
+      log({ type: "success", message: "✓ Goal created" });
+    },
+  },
+
+  // ── contributeToGoal ──────────────────────────────────────────────────────
+  {
+    name: "contributeToGoal",
+    weight: () => 6,
+    canRun: (s) => s.isLoggedIn && s.hasWorkspace,
+    async run(iframe, _state, log, abortRef) {
+      log({ type: "action", message: "→ Contribute to goal" });
+      const doc = iframeDoc(iframe);
+      const win = iframeWin(iframe);
+
+      await navigateTo(iframe, "/goals", "h1", abortRef);
+      await sleep(300, abortRef);
+
+      const addMoneyBtns = Array.from(doc.querySelectorAll("button")).filter(
+        (b) => b.textContent?.trim() === "Add money"
+      ) as HTMLButtonElement[];
+      if (addMoneyBtns.length === 0) {
+        log({ type: "info", message: "  No goals to contribute to yet" });
+        return;
+      }
+      pick(addMoneyBtns).click();
+
+      await waitFor("#contribution-amount", doc, 5000);
+      await sleep(200, abortRef);
+
+      const amountEl = doc.querySelector("#contribution-amount") as HTMLInputElement;
+      setReactInput(amountEl, String(randInt(20, 500)), win);
+      await sleep(150, abortRef);
+
+      clickButtonByText("Add contribution", doc);
+      await sleep(600, abortRef);
+      log({ type: "success", message: "✓ Contribution added" });
+    },
+  },
+
+  // ── deleteGoal ────────────────────────────────────────────────────────────
+  {
+    name: "deleteGoal",
+    weight: () => 3,
+    canRun: (s) => s.isLoggedIn && s.hasWorkspace,
+    async run(iframe, _state, log, abortRef) {
+      log({ type: "action", message: "→ Delete goal" });
+      const doc = iframeDoc(iframe);
+
+      await navigateTo(iframe, "/goals", "h1", abortRef);
+      await sleep(300, abortRef);
+
+      const deleteBtns = Array.from(doc.querySelectorAll("button")).filter(
+        (b) => b.textContent?.trim() === "Delete goal"
+      ) as HTMLButtonElement[];
+      if (deleteBtns.length === 0) {
+        log({ type: "info", message: "  No goals to delete yet" });
+        return;
+      }
+      pick(deleteBtns).click();
+      await sleep(400, abortRef);
+
+      const dialog = doc.querySelector('[data-slot="alert-dialog-content"]');
+      const confirmBtn = dialog
+        ? (Array.from(dialog.querySelectorAll("button")).find(
+            (b) => b.textContent?.trim() === "Delete"
+          ) as HTMLButtonElement | undefined)
+        : undefined;
+      if (confirmBtn) confirmBtn.click();
+
+      await sleep(600, abortRef);
+      log({ type: "success", message: "✓ Goal deleted" });
+    },
+  },
+
+  // ── addCategory ───────────────────────────────────────────────────────────
+  {
+    name: "addCategory",
+    weight: () => 5,
+    canRun: (s) => s.isLoggedIn && s.hasWorkspace,
+    async run(iframe, _state, log, abortRef) {
+      log({ type: "action", message: "→ Add category" });
+      const doc = iframeDoc(iframe);
+      const win = iframeWin(iframe);
+
+      await navigateTo(iframe, "/settings", "h1", abortRef);
+      await sleep(300, abortRef);
+
+      clickButtonByText("Add Category", doc);
+      await waitFor("#cat-name", doc, 5000);
+      await sleep(200, abortRef);
+
+      const nameEl = doc.querySelector("#cat-name") as HTMLInputElement;
+      setReactInput(nameEl, pick(CATEGORY_NAMES), win);
+      await sleep(150, abortRef);
+
+      clickButtonByText("Add category", doc);
+      await sleep(600, abortRef);
+      log({ type: "success", message: "✓ Category added" });
+    },
+  },
+
+  // ── deleteCategory ────────────────────────────────────────────────────────
+  {
+    name: "deleteCategory",
+    weight: () => 2,
+    canRun: (s) => s.isLoggedIn && s.hasWorkspace,
+    async run(iframe, _state, log, abortRef) {
+      log({ type: "action", message: "→ Delete category" });
+      const doc = iframeDoc(iframe);
+
+      await navigateTo(iframe, "/settings", "h1", abortRef);
+      await sleep(300, abortRef);
+
+      const deleteBtns = Array.from(doc.querySelectorAll("button")).filter(
+        (b) => b.textContent?.trim() === "Delete" && !(b as HTMLButtonElement).disabled
+      ) as HTMLButtonElement[];
+      if (deleteBtns.length === 0) {
+        log({ type: "info", message: "  No custom categories to delete" });
+        return;
+      }
+      pick(deleteBtns).click();
+      await sleep(400, abortRef);
+
+      const dialog = doc.querySelector('[data-slot="alert-dialog-content"]');
+      const confirmBtn = dialog
+        ? (Array.from(dialog.querySelectorAll("button")).find(
+            (b) => b.textContent?.trim() === "Delete"
+          ) as HTMLButtonElement | undefined)
+        : undefined;
+      if (confirmBtn) confirmBtn.click();
+
+      await sleep(600, abortRef);
+      log({ type: "success", message: "✓ Category deleted" });
+    },
+  },
+
+  // ── setBudget ─────────────────────────────────────────────────────────────
+  {
+    name: "setBudget",
+    weight: () => 6,
+    canRun: (s) => s.isLoggedIn && s.hasWorkspace,
+    async run(iframe, _state, log, abortRef) {
+      log({ type: "action", message: "→ Set budget" });
+      const doc = iframeDoc(iframe);
+      const win = iframeWin(iframe);
+
+      await navigateTo(iframe, "/settings", "h1", abortRef);
+      await sleep(400, abortRef);
+
+      const inputs = Array.from(
+        doc.querySelectorAll('input[aria-label^="Monthly budget for "]')
+      ) as HTMLInputElement[];
+      if (inputs.length === 0) {
+        log({ type: "info", message: "  No budget rows found" });
+        return;
+      }
+      const input = pick(inputs);
+      setReactInput(input, String(randInt(50, 800)), win);
+      await sleep(200, abortRef);
+
+      const row = input.closest("div.flex.items-center.justify-between");
+      const setBtn = row
+        ? (Array.from(row.querySelectorAll("button")).find(
+            (b) => b.textContent?.trim() === "Set" && !(b as HTMLButtonElement).disabled
+          ) as HTMLButtonElement | undefined)
+        : undefined;
+      if (setBtn) setBtn.click();
+
+      await sleep(600, abortRef);
+      log({ type: "success", message: "✓ Budget set" });
+    },
+  },
+
+  // ── clearBudget ───────────────────────────────────────────────────────────
+  {
+    name: "clearBudget",
+    weight: () => 2,
+    canRun: (s) => s.isLoggedIn && s.hasWorkspace,
+    async run(iframe, _state, log, abortRef) {
+      log({ type: "action", message: "→ Clear budget" });
+      const doc = iframeDoc(iframe);
+
+      await navigateTo(iframe, "/settings", "h1", abortRef);
+      await sleep(400, abortRef);
+
+      const clearBtns = Array.from(
+        doc.querySelectorAll('button[aria-label^="Clear budget for "]')
+      ) as HTMLElement[];
+      if (clearBtns.length === 0) {
+        log({ type: "info", message: "  No budgets to clear" });
+        return;
+      }
+      pick(clearBtns).click();
+      await sleep(600, abortRef);
+      log({ type: "success", message: "✓ Budget cleared" });
+    },
+  },
+
+  // ── exportData ────────────────────────────────────────────────────────────
+  {
+    name: "exportData",
+    weight: () => 4,
+    canRun: (s) => s.isLoggedIn && s.hasWorkspace,
+    async run(iframe, _state, log, abortRef) {
+      log({ type: "action", message: "→ Export data" });
+      const doc = iframeDoc(iframe);
+
+      await navigateTo(iframe, "/settings", "h1", abortRef);
+      await sleep(400, abortRef);
+
+      const exportFormat = Math.random() > 0.5 ? "JSON" : "CSV";
+      clickButtonByText(`Export ${exportFormat}`, doc);
+
+      await sleep(500, abortRef);
+      log({ type: "success", message: `✓ Exported ${exportFormat}` });
+    },
+  },
+
+  // ── importData ────────────────────────────────────────────────────────────
+  {
+    name: "importData",
+    weight: () => 2,
+    canRun: (s) => s.isLoggedIn && s.hasWorkspace,
+    async run(iframe, _state, log, abortRef) {
+      log({ type: "action", message: "→ Import data" });
+      const doc = iframeDoc(iframe);
+      const win = iframeWin(iframe);
+
+      await navigateTo(iframe, "/settings", "h1", abortRef);
+      await sleep(400, abortRef);
+
+      const input = doc.querySelector("#import-file") as HTMLInputElement | null;
+      if (!input) return;
+
+      const FileCtor = (win as Window & { File: typeof File }).File;
+      const DataTransferCtor = (win as Window & { DataTransfer: typeof DataTransfer }).DataTransfer;
+      const EventCtor = (win as Window & { Event: typeof Event }).Event;
+      const file = new FileCtor([JSON.stringify({ transactions: [] })], "bot-import.json", {
+        type: "application/json",
+      });
+      const dt = new DataTransferCtor();
+      dt.items.add(file);
+      input.files = dt.files;
+      input.dispatchEvent(new EventCtor("change", { bubbles: true }));
+
+      await sleep(600, abortRef);
+      log({ type: "success", message: "✓ Data imported" });
+    },
+  },
+
+  // ── quickAddTransaction ───────────────────────────────────────────────────
+  {
+    name: "quickAddTransaction",
+    weight: () => 8,
+    canRun: (s) => s.isLoggedIn && s.hasWorkspace,
+    async run(iframe, _state, log, abortRef) {
+      log({ type: "action", message: "→ Quick add transaction" });
+      const doc = iframeDoc(iframe);
+      const win = iframeWin(iframe);
+
+      const trigger = doc.querySelector('[aria-label="Open quick add"]') as HTMLElement | null;
+      if (!trigger) return;
+      trigger.click();
+
+      await waitFor('[aria-label="Quick add transaction"]', doc, 4000);
+      await sleep(200, abortRef);
+
+      const input = doc.querySelector('[aria-label="Quick add transaction"]') as HTMLInputElement;
+      const amount = Math.round(rand(5, 300) * 100) / 100;
+      setReactInput(input, `${pick(QUICK_ADD_PHRASES)} ${amount}`, win);
+      await sleep(400, abortRef);
+
+      // pick a category chip if offered, to guarantee a category is set
+      const dialog = doc.querySelector('[data-slot="dialog-content"]');
+      const chipBtns = dialog ? (Array.from(dialog.querySelectorAll("button")) as HTMLElement[]) : [];
+      if (chipBtns.length > 0) {
+        pick(chipBtns).click();
+        await sleep(200, abortRef);
+      }
+
+      pressEnter(input, win);
+      await sleep(600, abortRef);
+      log({ type: "success", message: "✓ Quick-added transaction" });
+    },
+  },
+
   // ── signOut ───────────────────────────────────────────────────────────────
   {
     name: "signOut",
@@ -594,6 +911,11 @@ export async function runBot(
     hasWorkspace: false,
     users: [],
   };
+
+  // The iframe is same-origin, so this is the same localStorage a previous
+  // run's session would still be sitting in — clear it or the first signUp
+  // gets redirected away from /sign-up by the guest guard.
+  clearSession();
 
   // reset iframe to start
   iframe.src = "/";

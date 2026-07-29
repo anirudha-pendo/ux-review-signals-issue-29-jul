@@ -119,6 +119,12 @@ export async function clickRadixSelectByTrigger(
   (item as HTMLElement).click();
 }
 
+// Dispatch a real Enter keydown (for inputs that submit on Enter, no button)
+export function pressEnter(el: HTMLElement, win: Window): void {
+  const EventCtor = (win as Window & { KeyboardEvent: typeof KeyboardEvent }).KeyboardEvent;
+  el.dispatchEvent(new EventCtor("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+}
+
 // Find and click a button whose visible text matches
 export function clickButtonByText(text: string, doc: Document): boolean {
   const buttons = doc.querySelectorAll("button");
