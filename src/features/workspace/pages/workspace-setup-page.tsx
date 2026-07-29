@@ -4,7 +4,10 @@ import { BpBox } from "@/shared/components/bp-box";
 import { createWorkspace } from "@/lib/db/repositories/workspaces.repo";
 import { seedDefaultCategories } from "@/lib/db/repositories/categories.repo";
 import { useAuthContext } from "@/features/auth/hooks/auth-context";
-import { WorkspaceSetupForm, type WorkspaceFormValues } from "../components/workspace-setup-form";
+import {
+  WorkspaceSetupForm,
+  type WorkspaceFormValues,
+} from "../components/workspace-setup-form";
 import type { Workspace } from "@/types";
 
 export function WorkspaceSetupPage() {
@@ -25,9 +28,16 @@ export function WorkspaceSetupPage() {
       await createWorkspace(workspace);
       await seedDefaultCategories(workspace.id);
       setActiveWorkspace(workspace);
+      pendo.track("workspace_created", {
+        currency: values.currency,
+        locale: values.locale,
+        workspace_name: values.name,
+      });
       navigate("/", { replace: true });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create workspace");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to create workspace",
+      );
     }
   }
 
@@ -42,12 +52,17 @@ export function WorkspaceSetupPage() {
         </p>
       </div>
 
-      <BpBox className="w-full max-w-[380px] section-enter" style={{ animationDelay: "40ms" }}>
+      <BpBox
+        className="w-full max-w-[380px] section-enter"
+        style={{ animationDelay: "40ms" }}
+      >
         <div className="border-b border-foreground px-5 py-3 flex items-center justify-between">
           <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
             Workspace Setup
           </span>
-          <span className="font-mono text-[10px] text-muted-foreground/40">step 2/2</span>
+          <span className="font-mono text-[10px] text-muted-foreground/40">
+            step 2/2
+          </span>
         </div>
 
         <div className="p-5">

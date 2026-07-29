@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { createTransaction, getTransactionsByWorkspaceId } from "@/lib/db/repositories/transactions.repo";
+import {
+  createTransaction,
+  getTransactionsByWorkspaceId,
+} from "@/lib/db/repositories/transactions.repo";
 import { getCategoriesByWorkspaceId } from "@/lib/db/repositories/categories.repo";
 import { notifyBudgetThreshold } from "@/features/transactions/hooks/use-transactions";
 import { emitDataChanged } from "@/shared/lib/data-events";
@@ -21,12 +24,17 @@ export interface UseQuickAddReturn {
   save: () => Promise<void>;
 }
 
-export function useQuickAdd(workspaceId: string, open: boolean): UseQuickAddReturn {
+export function useQuickAdd(
+  workspaceId: string,
+  open: boolean,
+): UseQuickAddReturn {
   const [input, setInput] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const [overrideCategory, setOverrideCategory] = useState<Category | null>(null);
+  const [overrideCategory, setOverrideCategory] = useState<Category | null>(
+    null,
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   // Lazy-load history on first open; reset the input each time it opens.
@@ -48,11 +56,12 @@ export function useQuickAdd(workspaceId: string, open: boolean): UseQuickAddRetu
 
   const parsed = useMemo(
     () => parseQuickAdd(input, { categories, transactions }),
-    [input, categories, transactions]
+    [input, categories, transactions],
   );
 
   const effectiveCategory = overrideCategory ?? parsed.category;
-  const canSave = parsed.amount !== null && effectiveCategory !== null && !isSaving;
+  const canSave =
+    parsed.amount !== null && effectiveCategory !== null && !isSaving;
 
   const save = useCallback(async () => {
     if (parsed.amount === null || !effectiveCategory) return;
@@ -81,6 +90,17 @@ export function useQuickAdd(workspaceId: string, open: boolean): UseQuickAddRetu
       };
       await createTransaction(tx);
       await notifyBudgetThreshold(workspaceId, tx, transactions, categories);
+      pendo.track("quick_add_transaction_saved", {
+        transaction_type: type,
+        amount: parsed.amount,
+        category_id: effectiveCategory.id,
+        date_explicit: parsed.dateExplicit,
+        type_explicit: parsed.typeExplicit,
+        category_guessed: parsed.categoryGuessed,
+        has_override_category: overrideCategory !== null,
+        description_length: (parsed.description || effectiveCategory.name)
+          .length,
+      });
       // Keep local history fresh so the next entry's inference sees this one.
       setTransactions((prev) => [tx, ...prev]);
       setInput("");
@@ -92,7 +112,14 @@ export function useQuickAdd(workspaceId: string, open: boolean): UseQuickAddRetu
     } finally {
       setIsSaving(false);
     }
-  }, [parsed, effectiveCategory, overrideCategory, workspaceId, transactions, categories]);
+  }, [
+    parsed,
+    effectiveCategory,
+    overrideCategory,
+    workspaceId,
+    transactions,
+    categories,
+  ]);
 
   return {
     input,

@@ -11,12 +11,16 @@ import { GoalCard } from "../components/goal-card";
 import { GoalFormDialog } from "../components/goal-form";
 import { ContributionFormDialog } from "../components/contribution-form";
 import { DeleteGoalDialog } from "../components/delete-goal-dialog";
-import type { GoalFormValues, ContributionFormValues } from "../schemas/goal.schema";
+import type {
+  GoalFormValues,
+  ContributionFormValues,
+} from "../schemas/goal.schema";
 import type { Goal } from "@/types";
 
 export function GoalsPage() {
   const { workspace } = useAuthContext();
-  const { goals, isLoading, addGoal, editGoal, removeGoal, contribute } = useGoals(workspace!.id);
+  const { goals, isLoading, addGoal, editGoal, removeGoal, contribute } =
+    useGoals(workspace!.id);
 
   const [showForm, setShowForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
@@ -33,6 +37,11 @@ export function GoalsPage() {
         name: values.name,
         targetAmount: values.targetAmount,
         deadline: values.deadline || undefined,
+        color: values.color,
+      });
+      pendo.track("goal_created", {
+        target_amount: values.targetAmount,
+        has_deadline: Boolean(values.deadline),
         color: values.color,
       });
       setShowForm(false);
@@ -67,6 +76,20 @@ export function GoalsPage() {
         date: values.date,
         note: values.note || undefined,
       });
+      const totalSaved =
+        contributingGoal.contributions.reduce((s, c) => s + c.amount, 0) +
+        values.amount;
+      const progressPercent =
+        contributingGoal.targetAmount > 0
+          ? Math.round((totalSaved / contributingGoal.targetAmount) * 100)
+          : 0;
+      pendo.track("goal_contribution_added", {
+        contribution_amount: values.amount,
+        goal_target_amount: contributingGoal.targetAmount,
+        total_saved_after: totalSaved,
+        progress_percent_after: progressPercent,
+        has_note: Boolean(values.note),
+      });
       setContributingGoal(null);
       toast.success("Contribution added");
     } catch {
@@ -78,6 +101,20 @@ export function GoalsPage() {
     if (!deletingGoal) return;
     try {
       await removeGoal(deletingGoal.id);
+      const totalContributions = deletingGoal.contributions.reduce(
+        (s, c) => s + c.amount,
+        0,
+      );
+      const progressPercent =
+        deletingGoal.targetAmount > 0
+          ? Math.round((totalContributions / deletingGoal.targetAmount) * 100)
+          : 0;
+      pendo.track("goal_deleted", {
+        target_amount: deletingGoal.targetAmount,
+        total_contributions: totalContributions,
+        contribution_count: deletingGoal.contributions.length,
+        progress_percent: progressPercent,
+      });
       setDeletingGoal(null);
       toast.success("Goal deleted");
     } catch {
@@ -109,10 +146,14 @@ export function GoalsPage() {
               No savings goals yet
             </p>
             <p className="text-sm text-muted-foreground max-w-sm">
-              Create a goal like &ldquo;Vacation: $2,000&rdquo;, add money toward it, and track your
-              projected completion date.
+              Create a goal like &ldquo;Vacation: $2,000&rdquo;, add money
+              toward it, and track your projected completion date.
             </p>
-            <Button size="sm" className="mt-2" onClick={() => setShowForm(true)}>
+            <Button
+              size="sm"
+              className="mt-2"
+              onClick={() => setShowForm(true)}
+            >
               <Plus data-icon="inline-start" />
               Create your first goal
             </Button>
@@ -136,7 +177,11 @@ export function GoalsPage() {
       )}
 
       {showForm && (
-        <GoalFormDialog open={showForm} onSubmit={handleAdd} onCancel={() => setShowForm(false)} />
+        <GoalFormDialog
+          open={showForm}
+          onSubmit={handleAdd}
+          onCancel={() => setShowForm(false)}
+        />
       )}
       {editingGoal && (
         <GoalFormDialog

@@ -12,6 +12,9 @@ export function SignInPage() {
   async function handleSignIn(values: SignInFormValues) {
     try {
       await signIn(values.username, values.password);
+      pendo.track("user_signed_in", {
+        has_workspace: hasWorkspace,
+      });
       navigate(hasWorkspace ? "/" : "/setup-workspace", { replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign in failed");
@@ -30,13 +33,18 @@ export function SignInPage() {
         </p>
       </div>
 
-      <BpBox className="w-full max-w-[360px] section-enter" style={{ animationDelay: "40ms" }}>
+      <BpBox
+        className="w-full max-w-[360px] section-enter"
+        style={{ animationDelay: "40ms" }}
+      >
         {/* Header strip */}
         <div className="border-b border-foreground px-5 py-3 flex items-center justify-between">
           <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
             Sign In
           </span>
-          <span className="font-mono text-[10px] text-muted-foreground/40">v1.0</span>
+          <span className="font-mono text-[10px] text-muted-foreground/40">
+            v1.0
+          </span>
         </div>
 
         <div className="p-5">
@@ -56,7 +64,10 @@ export function SignInPage() {
         </div>
       </BpBox>
 
-      <p className="mt-8 font-mono text-[10px] text-muted-foreground/40 tracking-wider section-enter" style={{ animationDelay: "80ms" }}>
+      <p
+        className="mt-8 font-mono text-[10px] text-muted-foreground/40 tracking-wider section-enter"
+        style={{ animationDelay: "80ms" }}
+      >
         Data stored locally. No servers.
       </p>
     </div>
