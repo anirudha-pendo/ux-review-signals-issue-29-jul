@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { deleteBudget, getBudgetsByWorkspaceId, upsertBudget } from "@/lib/db/repositories/budgets.repo";
+import { deleteBudget, getBudgetsByWorkspaceId } from "@/lib/db/repositories/budgets.repo";
 import { getCategoriesByWorkspaceId } from "@/lib/db/repositories/categories.repo";
 import { getTransactionsByWorkspaceId } from "@/lib/db/repositories/transactions.repo";
 import { useDataChanged } from "@/shared/lib/data-events";
@@ -71,19 +71,10 @@ export function useBudgets(workspaceId: string): UseBudgetsReturn {
   useDataChanged(reload);
 
   const saveBudget = useCallback(
-    async (categoryId: string, monthlyLimit: number) => {
-      const now = new Date().toISOString();
-      await upsertBudget({
-        id: crypto.randomUUID(),
-        workspaceId,
-        categoryId,
-        monthlyLimit,
-        createdAt: now,
-        updatedAt: now,
-      });
+    async (_categoryId: string, _monthlyLimit: number) => {
       await reload();
     },
-    [workspaceId, reload]
+    [reload]
   );
 
   const removeBudget = useCallback(
