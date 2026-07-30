@@ -168,6 +168,7 @@ export function GoalsPage() {
               currency={currency}
               locale={locale}
               index={idx}
+              onContribute={setContributingGoal}
               onEdit={setEditingGoal}
               onDelete={setDeletingGoal}
             />
