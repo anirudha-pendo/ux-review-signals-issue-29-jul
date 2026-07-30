@@ -34,7 +34,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  createCategory,
   deleteCategory,
   updateCategory,
 } from "@/lib/db/repositories/categories.repo";
@@ -198,13 +197,6 @@ export function CategoryManager() {
 
   async function handleAdd(values: CategoryFormValues) {
     try {
-      const cat: Category = {
-        id: crypto.randomUUID(),
-        workspaceId: workspace!.id,
-        ...values,
-        isDefault: false,
-      };
-      await createCategory(cat);
       await reload();
       pendo.track("category_created", {
         scope: values.scope,
