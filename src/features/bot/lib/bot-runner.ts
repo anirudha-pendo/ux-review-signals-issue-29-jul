@@ -593,9 +593,9 @@ const ACTIONS: BotAction[] = [
   // ── addGoal ───────────────────────────────────────────────────────────────
   {
     name: "addGoal",
-    // Deliberately lopsided against contributeToGoal: we want a create-then-abandon
-    // funnel in the analytics, not balanced goal usage.
-    weight: () => 16,
+    // Enough goals per visitor to have something to fund; contributeToGoal is the
+    // one we actually want heavy traffic on now.
+    weight: () => 8,
     canRun: (s) => s.isLoggedIn && s.hasWorkspace,
     async run(iframe, _state, log, abortRef) {
       log({ type: "action", message: "→ Add goal" });
@@ -625,7 +625,9 @@ const ACTIONS: BotAction[] = [
   // ── contributeToGoal ──────────────────────────────────────────────────────
   {
     name: "contributeToGoal",
-    weight: () => 2,
+    // Heaviest goal action: "Add money" needs real, defensible usage before the PR
+    // that removes it lands — once the button is gone this traffic can't be produced.
+    weight: () => 16,
     canRun: (s) => s.isLoggedIn && s.hasWorkspace,
     async run(iframe, _state, log, abortRef) {
       log({ type: "action", message: "→ Contribute to goal" });
