@@ -33,6 +33,10 @@ export function GoalCard({ goal, currency, locale, index, onContribute, onEdit, 
           </span>
         </div>
         <div className="flex items-center gap-0.5 shrink-0">
+          <Button variant="ghost" size="icon" className="size-7" onClick={() => onContribute(goal)}>
+            <Plus className="size-3" />
+            <span className="sr-only">Add money</span>
+          </Button>
           <Button variant="ghost" size="icon" className="size-7" onClick={() => onEdit(goal)}>
             <Pencil className="size-3" />
             <span className="sr-only">Edit goal</span>
@@ -108,11 +112,6 @@ export function GoalCard({ goal, currency, locale, index, onContribute, onEdit, 
             </>
           )}
         </div>
-
-        <Button size="sm" variant="outline" className="w-full" onClick={() => onContribute(goal)}>
-          <Plus data-icon="inline-start" />
-          Add money
-        </Button>
       </div>
     </BpBox>
   );
