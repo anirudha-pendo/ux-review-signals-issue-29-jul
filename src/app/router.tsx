@@ -5,6 +5,7 @@ import { SignUpPage } from "@/features/auth/pages/sign-up-page";
 import { WorkspaceSetupPage } from "@/features/workspace/pages/workspace-setup-page";
 import { DashboardPage } from "@/features/dashboard/pages/dashboard-page";
 import { TransactionsPage } from "@/features/transactions/pages/transactions-page";
+import { GoalsPage } from "@/features/goals/pages/goals-page";
 import { InsightsPage } from "@/features/insights/pages/insights-page";
 import { SettingsPage } from "@/features/settings/pages/settings-page";
 import { ProtectedRoute } from "@/shared/components/protected-route";
@@ -78,6 +79,14 @@ export function AppRouter() {
           element={
             <ProtectedRoute>
               <InsightsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/goals"
+          element={
+            <ProtectedRoute>
+              <GoalsPage />
             </ProtectedRoute>
           }
         />
