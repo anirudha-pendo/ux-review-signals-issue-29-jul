@@ -10,6 +10,7 @@ type RunState = "idle" | "running" | "done" | "stopped";
 
 export function BotPage() {
   const [totalActions, setTotalActions] = useState(40);
+  const [includeInsights, setIncludeInsights] = useState(false);
   const [logs, setLogs] = useState<BotProgress[]>([]);
   const [runState, setRunState] = useState<RunState>("idle");
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -27,7 +28,7 @@ export function BotPage() {
     setLogs([]);
     setRunState("running");
 
-    const config: BotConfig = { totalActions };
+    const config: BotConfig = { totalActions, includeInsights };
 
     try {
       await runBot(iframeRef.current, config, appendLog, abortRef);
@@ -73,10 +74,10 @@ export function BotPage() {
               id="totalActions"
               type="number"
               min={5}
-              max={200}
+              max={1000}
               value={totalActions}
               onChange={(e) =>
-                setTotalActions(Math.max(5, Math.min(200, Number(e.target.value))))
+                setTotalActions(Math.max(5, Math.min(1000, Number(e.target.value))))
               }
               disabled={isRunning}
               className="h-8 text-sm"
@@ -86,6 +87,16 @@ export function BotPage() {
               transactions, update settings, sign-out, and more.
             </p>
           </div>
+
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={includeInsights}
+              onChange={(e) => setIncludeInsights(e.target.checked)}
+              disabled={isRunning}
+            />
+            Include Insights traffic
+          </label>
 
           <div className="flex gap-2">
             {!isRunning ? (

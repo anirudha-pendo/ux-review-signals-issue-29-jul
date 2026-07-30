@@ -19,6 +19,12 @@ import {
 
 export interface BotConfig {
   totalActions: number;
+  /**
+   * Drive traffic to /insights. Off by default: the UX-signal scenarios need a
+   * page with provably zero views first, so Insights stays untouched until we
+   * deliberately want data on it.
+   */
+  includeInsights: boolean;
 }
 
 export interface BotProgress {
@@ -32,6 +38,7 @@ interface BotState {
   isLoggedIn: boolean;
   hasWorkspace: boolean;
   users: Array<{ username: string; password: string }>;
+  includeInsights: boolean;
 }
 
 interface BotAction {
@@ -123,8 +130,10 @@ const ACTIONS: BotAction[] = [
   // ── signUp ──────────────────────────────────────────────────────────────
   {
     name: "signUp",
-    weight: (s) => (s.users.length >= 2 ? 2 : 10),
-    canRun: () => true,
+    weight: () => 12,
+    // Only when logged out — the guest guard bounces a signed-in visitor away from
+    // /sign-up, so running this while logged in just burns an action on a timeout.
+    canRun: (s) => !s.isLoggedIn,
     async run(iframe, state, log, abortRef) {
       log({ type: "action", message: "→ Sign up new user" });
       const win = iframeWin(iframe);
@@ -275,6 +284,22 @@ const ACTIONS: BotAction[] = [
       await navigateTo(iframe, "/transactions", "h1", abortRef);
       await sleep(randInt(400, 800), abortRef);
       log({ type: "success", message: "✓ Viewing Transactions" });
+    },
+  },
+
+  // ── navigateInsights ──────────────────────────────────────────────────────
+  {
+    name: "navigateInsights",
+    weight: () => 8,
+    // Opt-in only. Everything else keeps /insights at zero views so it can serve as
+    // the "no data yet" baseline.
+    canRun: (s) => s.isLoggedIn && s.hasWorkspace && s.includeInsights,
+    async run(iframe, _state, log, abortRef) {
+      log({ type: "action", message: "→ Navigate to Insights" });
+      await navigateTo(iframe, "/insights", "h1", abortRef);
+      // Land and leave without engaging — that's the behaviour we want on record.
+      await sleep(randInt(500, 1100), abortRef);
+      log({ type: "success", message: "✓ Viewing Insights" });
     },
   },
 
@@ -568,7 +593,9 @@ const ACTIONS: BotAction[] = [
   // ── addGoal ───────────────────────────────────────────────────────────────
   {
     name: "addGoal",
-    weight: () => 8,
+    // Deliberately lopsided against contributeToGoal: we want a create-then-abandon
+    // funnel in the analytics, not balanced goal usage.
+    weight: () => 16,
     canRun: (s) => s.isLoggedIn && s.hasWorkspace,
     async run(iframe, _state, log, abortRef) {
       log({ type: "action", message: "→ Add goal" });
@@ -598,7 +625,7 @@ const ACTIONS: BotAction[] = [
   // ── contributeToGoal ──────────────────────────────────────────────────────
   {
     name: "contributeToGoal",
-    weight: () => 6,
+    weight: () => 2,
     canRun: (s) => s.isLoggedIn && s.hasWorkspace,
     async run(iframe, _state, log, abortRef) {
       log({ type: "action", message: "→ Contribute to goal" });
@@ -632,8 +659,10 @@ const ACTIONS: BotAction[] = [
 
   // ── deleteGoal ────────────────────────────────────────────────────────────
   {
+    // Kept rare: deleting goals would thin out the unfunded-goal population we're
+    // trying to build up.
     name: "deleteGoal",
-    weight: () => 3,
+    weight: () => 1,
     canRun: (s) => s.isLoggedIn && s.hasWorkspace,
     async run(iframe, _state, log, abortRef) {
       log({ type: "action", message: "→ Delete goal" });
@@ -791,8 +820,10 @@ const ACTIONS: BotAction[] = [
 
   // ── exportData ────────────────────────────────────────────────────────────
   {
+    // Low: each run downloads a real file to disk, and export/import aren't part of
+    // the scenarios we're seeding for.
     name: "exportData",
-    weight: () => 4,
+    weight: () => 1,
     canRun: (s) => s.isLoggedIn && s.hasWorkspace,
     async run(iframe, _state, log, abortRef) {
       log({ type: "action", message: "→ Export data" });
@@ -812,7 +843,7 @@ const ACTIONS: BotAction[] = [
   // ── importData ────────────────────────────────────────────────────────────
   {
     name: "importData",
-    weight: () => 2,
+    weight: () => 1,
     canRun: (s) => s.isLoggedIn && s.hasWorkspace,
     async run(iframe, _state, log, abortRef) {
       log({ type: "action", message: "→ Import data" });
@@ -844,7 +875,8 @@ const ACTIONS: BotAction[] = [
   // ── quickAddTransaction ───────────────────────────────────────────────────
   {
     name: "quickAddTransaction",
-    weight: () => 8,
+    // High and consistently successful — this is the "healthy feature" baseline.
+    weight: () => 16,
     canRun: (s) => s.isLoggedIn && s.hasWorkspace,
     async run(iframe, _state, log, abortRef) {
       log({ type: "action", message: "→ Quick add transaction" });
@@ -880,7 +912,8 @@ const ACTIONS: BotAction[] = [
   // ── signOut ───────────────────────────────────────────────────────────────
   {
     name: "signOut",
-    weight: () => 2,
+    // Raised so one long run cycles through many visitors instead of one.
+    weight: () => 5,
     canRun: (s) => s.isLoggedIn && s.hasWorkspace,
     async run(iframe, state, log, abortRef) {
       log({ type: "action", message: "→ Sign out" });
@@ -910,6 +943,7 @@ export async function runBot(
     isLoggedIn: false,
     hasWorkspace: false,
     users: [],
+    includeInsights: config.includeInsights,
   };
 
   // The iframe is same-origin, so this is the same localStorage a previous
