@@ -1,7 +1,6 @@
-import { Search, X } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import type { Category } from "@/types";
 
 export const ALL_CATEGORIES_VALUE = "_all";
@@ -20,16 +19,6 @@ interface TransactionFiltersBarProps {
 }
 
 export function TransactionFiltersBar({ filters, categories, onChange }: TransactionFiltersBarProps) {
-  const hasActiveFilters =
-    filters.search !== "" ||
-    filters.type !== "all" ||
-    filters.categoryId !== "" ||
-    filters.month !== "";
-
-  function reset() {
-    onChange({ search: "", type: "all", categoryId: "", month: "" });
-  }
-
   const categorySelectValue = filters.categoryId === "" ? ALL_CATEGORIES_VALUE : filters.categoryId;
 
   function handleCategoryChange(v: string) {
@@ -89,11 +78,6 @@ export function TransactionFiltersBar({ filters, categories, onChange }: Transac
         className="w-[160px]"
       />
 
-      {hasActiveFilters && (
-        <Button variant="ghost" size="icon" onClick={reset} aria-label="Clear filters">
-          <X className="size-4" />
-        </Button>
-      )}
     </div>
   );
 }
