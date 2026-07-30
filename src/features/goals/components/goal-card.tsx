@@ -1,4 +1,4 @@
-import { CalendarClock, Check, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarClock, Check, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { BpBox } from "@/shared/components/bp-box";
@@ -11,12 +11,11 @@ interface GoalCardProps {
   currency: string;
   locale: string;
   index: number;
-  onContribute: (goal: Goal) => void;
   onEdit: (goal: Goal) => void;
   onDelete: (goal: Goal) => void;
 }
 
-export function GoalCard({ goal, currency, locale, index, onContribute, onEdit, onDelete }: GoalCardProps) {
+export function GoalCard({ goal, currency, locale, index, onEdit, onDelete }: GoalCardProps) {
   const projection = projectGoal(goal);
   const percent = Math.min(Math.round(projection.ratio * 100), 100);
 
@@ -108,11 +107,6 @@ export function GoalCard({ goal, currency, locale, index, onContribute, onEdit, 
             </>
           )}
         </div>
-
-        <Button size="sm" variant="outline" className="w-full" onClick={() => onContribute(goal)}>
-          <Plus data-icon="inline-start" />
-          Add money
-        </Button>
       </div>
     </BpBox>
   );
