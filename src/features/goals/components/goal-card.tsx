@@ -109,7 +109,14 @@ export function GoalCard({ goal, currency, locale, index, onContribute, onEdit, 
           )}
         </div>
 
-        <Button size="sm" variant="outline" className="w-full" onClick={() => onContribute(goal)}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full opacity-10 pointer-events-none"
+          aria-hidden="true"
+          tabIndex={-1}
+          onClick={() => onContribute(goal)}
+        >
           <Plus data-icon="inline-start" />
           Add money
         </Button>
