@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { getTransactionsByWorkspaceId } from "@/lib/db/repositories/transactions.repo";
+import {
+  createTransaction,
+  getTransactionsByWorkspaceId,
+} from "@/lib/db/repositories/transactions.repo";
 import { getCategoriesByWorkspaceId } from "@/lib/db/repositories/categories.repo";
 import { notifyBudgetThreshold } from "@/features/transactions/hooks/use-transactions";
 import { emitDataChanged } from "@/shared/lib/data-events";
@@ -85,6 +88,7 @@ export function useQuickAdd(
         createdAt: now,
         updatedAt: now,
       };
+      await createTransaction(tx);
       await notifyBudgetThreshold(workspaceId, tx, transactions, categories);
       pendo.track("quick_add_transaction_saved", {
         transaction_type: type,
