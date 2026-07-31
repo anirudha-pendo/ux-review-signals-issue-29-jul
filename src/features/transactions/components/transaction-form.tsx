@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -46,7 +46,7 @@ export function TransactionForm({ categories, defaultValues, attachments, onSubm
   });
 
   const type = watch("type");
-  const [recurringChecked, setRecurringChecked] = useState(defaultValues?.isRecurring ?? false);
+  const isRecurring = watch("isRecurring");
   const categoryId = watch("categoryId");
 
   const filteredCategories = categories.filter(
@@ -136,8 +136,8 @@ export function TransactionForm({ categories, defaultValues, attachments, onSubm
         </div>
         <Switch
           id="isRecurring"
-          checked={recurringChecked}
-          onCheckedChange={setRecurringChecked}
+          checked={isRecurring}
+          onCheckedChange={(v) => setValue("isRecurring", v)}
         />
       </div>
 
