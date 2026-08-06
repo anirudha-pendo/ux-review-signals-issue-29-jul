@@ -38,7 +38,7 @@ export function DataExportImport() {
       // Receipt attachments (binary blobs) are intentionally not included.
       const data = {
         workspace,
-        transactions,
+        transactions: [],
         categories,
         goals,
         budgets,
