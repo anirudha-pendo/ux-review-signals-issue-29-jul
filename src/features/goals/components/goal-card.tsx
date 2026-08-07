@@ -112,7 +112,7 @@ export function GoalCard({ goal, currency, locale, index, onContribute, onEdit, 
         <Button
           size="sm"
           variant="outline"
-          className="w-full opacity-10"
+          className="w-full opacity-60 hover:opacity-100"
           onClick={() => onContribute(goal)}
         >
           <Plus data-icon="inline-start" />
