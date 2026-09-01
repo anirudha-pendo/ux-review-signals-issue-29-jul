@@ -222,6 +222,12 @@ export function CategoryManager() {
     try {
       await updateCategory({ ...editingCat, ...values });
       await reload();
+      pendo.track("category_updated", {
+        scope: values.scope,
+        category_name: values.name,
+        scope_changed: values.scope !== editingCat.scope,
+        name_changed: values.name !== editingCat.name,
+      });
       setEditingCat(null);
       toast.success("Category updated");
     } catch {
