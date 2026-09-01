@@ -11,7 +11,8 @@ interface PendoIdentifyOptions {
 interface Pendo {
   initialize(options: PendoIdentifyOptions): void;
   identify(options: PendoIdentifyOptions): void;
-  clearSession(): void;
+  // Not part of the install-snippet stub — only defined once the agent loads.
+  clearSession?(): void;
   track(eventName: string, metadata?: Record<string, unknown>): void;
 }
 

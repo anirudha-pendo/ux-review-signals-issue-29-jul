@@ -140,7 +140,7 @@ export function useAuth(): AuthState & AuthActions {
 
   const signOut = useCallback(() => {
     clearSession();
-    pendo.clearSession();
+    pendo.clearSession?.(); // only exists once the agent loads; skip if not (else auth state never clears)
     setUser(null);
     setWorkspace(null);
   }, []);
