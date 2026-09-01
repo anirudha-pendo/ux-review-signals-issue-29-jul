@@ -61,6 +61,14 @@ export function GoalsPage() {
         deadline: values.deadline || undefined,
         color: values.color,
       });
+      pendo.track("goal_updated", {
+        target_amount: values.targetAmount,
+        has_deadline: Boolean(values.deadline),
+        color: values.color,
+        target_amount_changed: values.targetAmount !== editingGoal.targetAmount,
+        deadline_changed:
+          (values.deadline || "") !== (editingGoal.deadline || ""),
+      });
       setEditingGoal(null);
       toast.success("Goal updated");
     } catch {
