@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
@@ -10,8 +10,10 @@ import Avatar from "boring-avatars";
 import { updateUser } from "@/lib/db/repositories/users.repo";
 import { useAuthContext } from "@/features/auth/hooks/auth-context";
 
+const DISPLAY_NAME_MAX = 50;
+
 const profileSchema = z.object({
-  displayName: z.string().min(1, "Display name is required").max(50),
+  displayName: z.string().min(1, "Display name is required").max(DISPLAY_NAME_MAX),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -22,11 +24,17 @@ export function ProfileForm() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: { displayName: user?.displayName ?? "" },
   });
+
+  // The 50-character cap lives in the schema; surface it while typing instead of
+  // only on submit, so a long name is not rejected after the fact.
+  const displayName = useWatch({ control, name: "displayName" }) ?? "";
+  const remaining = DISPLAY_NAME_MAX - displayName.length;
 
   async function onSubmit(values: ProfileFormValues) {
     if (!user) return;
@@ -82,11 +90,22 @@ export function ProfileForm() {
           aria-invalid={!!errors.displayName}
           {...register("displayName")}
         />
-        {errors.displayName && (
-          <p className="text-sm text-destructive">
-            {errors.displayName.message}
+        <div className="flex items-center justify-between gap-2">
+          {errors.displayName ? (
+            <p className="text-sm text-destructive">
+              {errors.displayName.message}
+            </p>
+          ) : (
+            <span />
+          )}
+          <p
+            className={`font-mono text-[10px] tracking-wider ${
+              remaining < 0 ? "text-destructive" : "text-muted-foreground"
+            }`}
+          >
+            {remaining} left
           </p>
-        )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-1">
