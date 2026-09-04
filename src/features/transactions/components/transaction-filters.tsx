@@ -30,6 +30,12 @@ export function TransactionFiltersBar({ filters, categories, onChange }: Transac
     onChange({ search: "", type: "all", categoryId: "", month: "" });
   }
 
+  const activeFilterCount =
+    (filters.search !== "" ? 1 : 0) +
+    (filters.type !== "all" ? 1 : 0) +
+    (filters.categoryId !== "" ? 1 : 0) +
+    (filters.month !== "" ? 1 : 0);
+
   const categorySelectValue = filters.categoryId === "" ? ALL_CATEGORIES_VALUE : filters.categoryId;
 
   function handleCategoryChange(v: string) {
@@ -90,8 +96,9 @@ export function TransactionFiltersBar({ filters, categories, onChange }: Transac
       />
 
       {hasActiveFilters && (
-        <Button variant="ghost" size="icon" onClick={reset} aria-label="Clear filters">
-          <X className="size-4" />
+        <Button variant="ghost" size="sm" onClick={reset} aria-label="Clear filters">
+          <X className="size-4 mr-1" />
+          Clear {activeFilterCount} filter{activeFilterCount === 1 ? "" : "s"}
         </Button>
       )}
     </div>
